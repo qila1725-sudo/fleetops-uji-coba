@@ -1643,7 +1643,7 @@ async function doLogin(){
   await loadAll();
   const acc = DB.accounts.find(a=>a.id===user.id);
   if(!acc || acc.active===false){ ACCESS_TOKEN=null; REFRESH_TOKEN=null; err.textContent='Akun tidak aktif atau belum terdaftar.'; err.style.display='block'; return; }
-  if(String(acc.role).toLowerCase()==='maintenance'){
+  if(true){ // UJI COBA: semua akun boleh masuk area SPK
     SPK_USER = acc.username; window._spkAcc = acc;
     document.getElementById('loginPass').value='';
     spkShowOnly('spkChoiceScreen');
@@ -1692,6 +1692,7 @@ const titles = {
 // Akun bawaan DPM2026 selalu Maintenance supaya tidak bisa terkunci.
 const ROLE_PAGES = { staff:['bengkel'], gudang:['sparepart'] };
 function roleKind(a){
+  return 'maintenance'; // UJI COBA: semua akun punya akses penuh ke semua menu
   if(!a) return 'staff';
   if(String(a.username||'').trim().toUpperCase()==='DPM2026') return 'maintenance';
   const r = String(a.role||'').trim().toLowerCase();
@@ -3430,7 +3431,7 @@ async function submitSpkGate(){
   const user = await authSignIn(u, p);
   if(user) await loadAll();
   const acc = user ? DB.accounts.find(a=>a.id===user.id) : null;
-  if(!acc || String(acc.role).toLowerCase()!=='maintenance' || acc.active===false){ ACCESS_TOKEN=null; REFRESH_TOKEN=null; $id('spkGateErr').style.display='block'; return; }
+  if(!acc || acc.active===false){ ACCESS_TOKEN=null; REFRESH_TOKEN=null; $id('spkGateErr').style.display='block'; return; }
   SPK_USER = acc.username; window._spkAcc = acc; closeSpkGate(); spkShowOnly('spkChoiceScreen');
 }
 function leaveSpk(){ ACCESS_TOKEN=null; REFRESH_TOKEN=null; window._spkAcc=null; currentUser=null; spkShowOnly('loginScreen'); }
