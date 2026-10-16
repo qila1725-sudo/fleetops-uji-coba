@@ -1260,7 +1260,8 @@ async function sb(path, options={}){
     throw new Error(`Supabase ${res.status}: ${t || res.statusText}`);
   }
   const text = await res.text();
-  return text ? JSON.parse(text) : null;
+  // UJI COBA: samakan semua id/xxx_id jadi string, agar cocok dengan id di tombol (onclick) yang selalu string
+  return text ? JSON.parse(text, (k,v)=> ((k==='id' || k.endsWith('_id')) && typeof v==='number') ? String(v) : v) : null;
 }
 const sbGet = (table, q='') => sb(`${table}?${q}`);
 const sbInsert = (table, rows) => sb(table, {method:'POST', body: Array.isArray(rows)?rows:[rows]});
