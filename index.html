@@ -469,7 +469,7 @@
 </style>
 </head>
 <body>
-<div id="ujiBanner" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#e67e00;color:#fff;font:700 12px Arial;text-align:center;padding:3px 8px;">MODE UJI COBA — bukan aplikasi asli, data terpisah</div>
+<div id="ujiBanner" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#e67e00;color:#fff;font:700 12px Arial;text-align:center;padding:3px 8px;">MODE UJI COBA — bukan aplikasi asli, data terpisah • build 4 (akses penuh + id + tanpa cache)</div>
 <script>if(String(SUPABASE_URL).startsWith('ISI_')){var b=document.getElementById('ujiBanner');b.style.background='#c0392b';b.textContent='UJI COBA: database belum diisi. Isi SUPABASE_URL dan SUPABASE_ANON_KEY di file ini.';}</script>
 
 <div id="splashScreen">
@@ -1442,7 +1442,15 @@ ${closing}`;
 function waMessage(v){ return waMessageFor(waGroup(v)); }
 function waLinkFor(list){ return `https://wa.me/${waPhoneKey(list[0])}?text=${encodeURIComponent(waMessageFor(list))}`; }
 function waLink(v){ return waLinkFor(waGroup(v)); }
-function openWaVehicle(id){ const v=DB.vehicles.find(x=>x.id===id); if(v) window.open(waLink(v),'_blank'); }
+function findVehicleById(id){
+  const v = DB.vehicles.find(x=> x.id!=null && String(x.id)===String(id));
+  if(!v){
+    const s = DB.vehicles[0];
+    showToast('Data kendaraan tidak ditemukan. id tombol='+id+' | contoh id di data='+(s? String(s.id)+' ('+typeof s.id+')' : 'data kosong'), true);
+  }
+  return v||null;
+}
+function openWaVehicle(id){ const v=findVehicleById(id); if(v) window.open(waLink(v),'_blank'); }
 function waBtnLabel(v, base){ const n=waGroup(v).length; return n>1 ? `${base} (${n} unit)` : base; }
 // untuk kirim massal dari dashboard: 1 chat per PT+nomor WA (tidak dobel), kecuali PT yang diatur "per unit"
 function dedupeWaTargets(list){ const seen=new Set(); return list.filter(v=>{ const k=(waPhoneKey(v)&&waPrefFor(v)!=='single')?waGroupKey(v):'id:'+v.id; if(seen.has(k)) return false; seen.add(k); return true; }); }
@@ -1960,7 +1968,9 @@ function guessVehicleTypeSelects(v){
 }
 function openVehicleModal(id){
   document.getElementById('vModalTitle').textContent = id? 'Edit / Update Kendaraan':'Tambah Kendaraan';
-  const v = id? DB.vehicles.find(x=>x.id===id):null;
+  const v = id? findVehicleById(id):null;
+  if(id && !v) return;
+  document.getElementById('vModalTitle').textContent = id? 'Edit / Update Kendaraan':'Tambah Kendaraan';
   document.getElementById('v_id').value = id||'';
   const set=(k,val)=>document.getElementById(k).value = val||'';
   set('v_pt', v?.pt); set('v_area', v?.area); set('v_user', v?.user); set('v_phone', v?.phone);
@@ -3704,7 +3714,9 @@ function printSpk(id){
 document.addEventListener('keydown', e=>{ if(e.key==='Enter' && $id('spkGateBg').classList.contains('show')) submitSpkGate(); if(e.key==='Escape'){ closeSpkGate(); closeSpkForm(); } });
 
 /* ================= INIT ================= */
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+/* UJI COBA: matikan service worker & cache lama supaya setiap update file langsung terpakai */
+if('serviceWorker' in navigator){ navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister())).catch(()=>{}); }
+if(window.caches){ caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))).catch(()=>{}); }
 function hideSplash(){
   const sp = document.getElementById('splashScreen');
   if(!sp) return;
